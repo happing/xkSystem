@@ -1,5 +1,5 @@
 # 学生选课系统
-# 1.exam.sql导入MySQL //数据库连接池可在 db/pool.js修改
+# 1.web1701.sql导入MySQL //数据库连接池可在 db/pool.js修改
 # 2.安装依赖 $ npm install
 # 3.开启后台服务器 $ npm run start
 # 4.浏览器访问 localhost:3000 //端口可在目录 bin/www 修改
