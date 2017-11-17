@@ -1,0 +1,253 @@
+<div class="st">
+  <div class="stu">
+    <h3>Student Management</h3>
+    <hr>
+    <div class="search">
+      <input type="text">
+      <input type="submit" value="关键字搜索" class="btn btn-info">
+    </div>
+  </div> 
+</div>
+<table class="table table-bordered table-hover">
+  <thead>
+    <tr>
+      <th><input type="checkbox"></th>
+      <th>name</th>
+      <th>gender</th>
+      <th>birth</th>
+      <th>class</th>
+    </tr>
+  </thead>
+  <tbody>
+    
+  </tbody>
+</table>
+<div class="opt">
+  <button class="btn btn-info">alter</button>
+  <button class="btn btn-info">add</button>
+  <button class="btn btn-info">delete</button>
+</div>
+ <!-- 模态框 用于修改-->
+<div class="modal fade altermodal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Ｍessage</h4>
+      </div>
+      <!--模态框内容  -->
+      <div class="modal-body">
+        <form action="" class="studentForm">
+          <input type="hidden" name="id">
+          name : <input type="text" name="name"> 
+          <br>
+          gender:<input type="text" name="gender" placeholder="男或女">
+          <br>
+          birth &nbsp;: <input type="text" name="birth" placeholder="
+          xxxx-xx-xx">
+          <br>
+          class : <input type="text" name="class">
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary savechange" data-dismiss="modal">Save changes</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<!-- 模态框用于增加页面 -->
+<div class="modal fade addmodal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Ｍessage</h4>
+      </div>
+      <!--模态框内容  -->
+      <div class="modal-body">
+        <form action="" class="addForm">
+          <input type="hidden" name="id">
+          name : <input type="text" name="name">
+          <br>
+          gender:<input type="text" name="gender" placeholder="男或女"><span style="display:none">请正确输入</span>
+          <br>
+          birth &nbsp;: <input type="text" name="birth" placeholder="xxxx-xx-xx"><span style="display:none">请正确输入</span>
+          <br>
+          class : <input type="text" name="class">
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary"　data-dismiss="modal" id="addmodal">Save changes</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<script>
+  $(function(){
+    //显示所有信息
+    $.getJSON('/students/findAllStudent',function(data){
+      data.forEach(function(item) {
+        var birth = item.birth?item.birth.slice(0,item.birth.indexOf('T')):''; 
+        var newTr = $(
+          '<tr>'
+            +'<td><input type="checkbox" value="'+item.id+'"></td>'
+            +'<td>'+item.name+'</td>'
+            +'<td>'+item.gender+'</td>'
+            +'<td>'+birth+'</td>'
+            +'<td>'+item.class_id+'</td>'
+          +'</tr>'
+        );
+        $('tbody').append(newTr);
+      }, this);
+    });
+
+    //修改
+    //为修改按钮绑定事件
+    $('.opt button:eq(0)').off();
+    $('.opt button:eq(0)').on('click',function(){
+      var ids = $('tbody input:checkbox:checked').toArray().map(function(item){
+        return item.value;
+      });
+      if(ids.length<1){
+        alert('请选中要修改的信息');
+      }else if(ids.length>1){
+        alert('请正确选中要修改的信息');
+      }else{
+        $.getJSON('/students/findById?id='+ids[0],function(data){
+          $('.studentForm input[name=id]').val(data[0].id);
+          $('.studentForm input[name=name]').val(data[0].name);
+          $('.studentForm input[name=birth]').val(data[0].birth?data[0].birth.slice(0,data[0].birth.indexOf('T')):'');
+          $('.studentForm input[name=gender]').val(data[0].gender);
+        });
+        $('.altermodal').modal('show');       
+      };    
+    });
+    //为save绑定事件
+    $('button.savechange').off();
+    $('button.savechange').on('click',function(){
+      var id = $('.studentForm input[name=id]').val();
+      console.log(id);
+      var name = $('.studentForm input[name=name]').val();
+      var gender = $('.studentForm input[name=gender]').val();
+      var birth = $('.studentForm input[name=birth]').val();
+      var class_id = $('.studentForm input[name=class]').val();
+      var newStudent = {
+        id:id,
+        name:name,
+        gender:gender,
+        birth:birth,
+        class_id:class_id
+      };
+      $.ajax('students/updateById',{
+        'data':newStudent,
+        'method':'POST',
+        'content-Type':'application/json',
+        success:function(data){
+          $('.altermodal').modal('hide');
+          //有就不能执行局部刷新操作
+          //$('.navLeft dd').eq(0).trigger('click');
+          location.reload();
+        }
+      });          
+    }); 
+
+
+    //增加
+    $('button:eq(1)').off();    
+    $('button:eq(1)').on('click',function(){
+      var ids = $('tbody input:checkbox:checked').toArray().map(function(item){
+        return item.value;
+      });
+      if(ids.length>0){
+        alert('请取消选中修改项');
+      }else{
+        $('.addmodal').modal('show');   
+      }
+    });
+    $('#addmodal').off();
+    $('#addmodal').on('click',function(){
+      var id = $('.addForm input[name=id]').val();
+      var name = $('.addForm input[name=name]').val();
+      var gender = $('.addForm input[name=gender]').val();
+      var birth = $('.addForm input[name=birth]').val();
+      var class_id = $('.addForm input[name=class]').val();
+      var newStudent = {
+        id:id,
+        name:name,
+        gender:gender,
+        birth:birth,
+        class_id:class_id
+      };
+      $.ajax('students/addStudent',{
+        'data':newStudent,
+        'method':'POST',
+        'content-Type':'application/json',
+        success:function(data){
+          $('.addmodal').modal('hide');
+          //$('.navLeft dd:eq(0)').trigger('click');
+          location.reload();
+        }
+      });
+    });
+
+
+    //删除
+    $('.opt button:eq(2)').off();
+    $('.opt button:eq(2)').on('click',function(){
+      
+      var ids = $('tbody input:checkbox:checked').map(function(index,item){
+        return $(item).val();
+      }).toArray();       
+      $.ajax({
+        url:'students/deleteById',
+        data:JSON.stringify(ids),
+        method:'POST',
+        contentType:'application/json',
+        success:function(data){
+          $('.navLeft dd:eq(0)').trigger('click');
+        }
+      });  
+    });
+    /*
+    //查询 id
+    /*
+    $('.search input:eq(1)').on('click',function(){
+      var id = $('.search input:eq(0)').val();
+       $.getJSON('students/findById?id='+id,function(data){ 
+          $('tbody tr').remove();
+          data.forEach(function(item){
+            var newTr = '<tr>'
+              +'<td><input type="checkbox" value='+item.id+'></td>'
+              +'<td>'+item.name+'</td>'
+              +'<td>'+item.gender+'</td>'
+              +'<td>'+item.birth.slice(0,10)+'</td>'
+              +'<tr>';
+            $('tbody').append(newTr);
+          })
+        }) 
+    });
+      */
+
+      //关键字查询
+        $('.search input:eq(1)').on('click',function(){
+          var keys = $('.search input:eq(0)').val();
+          $.getJSON('students/query/'+keys,function(data){ 
+            $('tbody tr').remove();
+            data.forEach(function(item){
+              var newTr = '<tr>'
+                +'<td><input type="checkbox" value='+item.id+'></td>'
+                +'<td>'+item.name+'</td>'
+                +'<td>'+item.gender+'</td>'
+                +'<td>'+item.birth.slice(0,10)+'</td>'
+                +'<td>'+item.class_id+'</td>'            
+                +'<tr>';
+              $('tbody').append(newTr);
+            })
+          }) 
+        });           
+  })
+</script>
